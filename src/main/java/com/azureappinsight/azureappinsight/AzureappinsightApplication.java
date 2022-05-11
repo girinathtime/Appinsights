@@ -14,7 +14,7 @@ import org.apache.jmeter.threads.JMeterContextService;
 import org.apache.jmeter.visualizers.backend.AbstractBackendListenerClient;
 import org.apache.jmeter.visualizers.backend.BackendListenerContext;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.slf4j.LoggerFactory; 
 
 import java.util.Date;
 import java.util.HashMap;
@@ -169,6 +169,33 @@ public class AzureBackendClient extends AbstractBackendListenerClient {
             QuickPulse.INSTANCE.initialize(config);
         }
 
+         
+
+        //implementing TrackException Logging exceptions for diagnosis.
+        try { 
+            int[] count = {1, 2, 3};
+            System.out.println(count[10]);  
+        } catch (Exception ex) {
+            telemetryClient.trackException(ex);
+        }
+        //TrackDependency	Logging the duration and frequency of calls to external components
+		//that your app depends on.
+         boolean success = false;
+         Instant startTime = Instant.now();
+         try {
+             success = dependency.call();
+         }
+         finally {
+             Instant endTime = Instant.now();
+             Duration delta = Duration.between(startTime, endTime);
+             RemoteDependencyTelemetry dependencyTelemetry = new RemoteDependencyTelemetry("My Dependency", "myCall", delta, success);
+             dependencyTelemetry.setTimeStamp(startTime);
+             telemetryClient.trackDependency(dependencyTelemetry);
+         }     
+     
+        //TrackTrace	Resource Diagnostic log messages. You can also capture third-party logs.
+		telemetryClient.trackTrace(message, SeverityLevel.Warning, properties);
+		   
         samplersToFilter = new HashSet<String>();
         if (!useRegexForSamplerList) {
             String[] samplers = samplersList.split(SEPARATOR);
